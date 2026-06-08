@@ -1,6 +1,7 @@
 package com.hmdp.controller;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
@@ -10,10 +11,15 @@ import com.hmdp.service.IUserInfoService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
+import static com.hmdp.utils.RedisConstants.LOGIN_USER_KEY;
 
 /**
  * <p>
@@ -27,7 +33,8 @@ import javax.servlet.http.HttpSession;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
     @Resource
     private IUserService userService;
 
@@ -56,10 +63,13 @@ public class UserController {
      * @return 无
      */
     @PostMapping("/logout")
-    public Result logout(HttpSession session){
-        //清除session
-        UserHolder.removeUser();
-        session.removeAttribute("code");
+    public Result logout(HttpServletRequest request){
+        String token = request.getHeader("authorization");
+
+        if(StrUtil.isNotBlank(token)){
+            stringRedisTemplate.delete(LOGIN_USER_KEY + token);
+        }
+
         return Result.ok();
     }
     /**
@@ -69,6 +79,7 @@ public class UserController {
     @GetMapping("/me")
     public Result me(){
         UserDTO user= UserHolder.getUser();
+        log.debug("user = " + user);
         return Result.ok(user);
     }
 
