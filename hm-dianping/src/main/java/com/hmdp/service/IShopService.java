@@ -17,4 +17,8 @@ import org.springframework.stereotype.Service;
 public interface IShopService extends IService<Shop> {
 
     Result queryShopById(Long id);
+
+    Result update(Shop shop);
+    //保存店铺到Redis，带逻辑过期时间
+    void saveShop2Redis(Long id, Long expireSeconds);
 }
