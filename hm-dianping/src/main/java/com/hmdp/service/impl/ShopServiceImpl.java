@@ -10,6 +10,7 @@ import com.hmdp.entity.Shop;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -34,6 +35,8 @@ import static com.hmdp.utils.RedisConstants.*;
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    private CacheClient cacheClient;
     // 尝试获取锁（setIfAbsent = Redis 的 SET NX）
     private boolean tryLock(String key) {
         Boolean flag = stringRedisTemplate.opsForValue()
@@ -63,9 +66,12 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         //缓存穿透
         //Shop shop = queryWithPassThrough(id);
         //缓存击穿
-        //Shop shop = queryWithMutex(id);
+        //Shop shop = cacheClient.get(CACHE_SHOP_KEY,id,Shop.class,sid->getById(sid),30L,TimeUnit.MINUTES);
         //缓存设置逻辑过期
-        Shop shop = queryWithLogicalExpire(id);
+        //Shop shop = queryWithLogicalExpire(id);
+
+        //用封装的方法
+        Shop shop = cacheClient.getWithLogicalExpire(CACHE_SHOP_KEY,id,Shop.class,sid->getById(sid),30L,TimeUnit.MINUTES);
         if(shop==null){
             return Result.fail("店铺不存在");
         }
@@ -73,7 +79,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         return Result.ok(shop);
     }
     //缓存穿透
-    public Shop queryWithPassThrough(Long id){
+    /*public Shop queryWithPassThrough(Long id){
         //1.判断有无缓存
         String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY+id);
         // 2. 缓存命中
@@ -99,10 +105,11 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY+id,JSONUtil.toJsonStr(shop),CACHE_SHOP_TTL, TimeUnit.MINUTES);
 
         return shop;
-    }
+    }*/
+
 
     //缓存击穿
-    public Shop queryWithMutex(Long id){
+    /*public Shop queryWithMutex(Long id){
         String lockKey = "lock:shop" + id;
         //1.判断有无缓存
         String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY+id);
@@ -146,10 +153,10 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         } finally {
             unlock(lockKey);  // ⭐ 无论成功还是异常，都要释放锁
         }
-    }
+    }*/
 
     //缓存加逻辑过期时间
-    public Shop queryWithLogicalExpire(Long id){
+    /*public Shop queryWithLogicalExpire(Long id){
         //1.判断有无缓存
         String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY+id);
         // 2. 缓存未命中
@@ -186,7 +193,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         //6.返回过期的店铺信息
         return shop;
-    }
+    }*/
 
     @Override
     public Result update(Shop shop) {
