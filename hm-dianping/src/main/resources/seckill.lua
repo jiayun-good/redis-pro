@@ -6,7 +6,7 @@
 -- 接收参数
 local voucherId = ARGV[1]
 local userId = ARGV[2]
-
+local orderId = ARGV[3]
 -- 拼接Redis key
 local stockKey = 'seckill:stock:' .. voucherId
 local orderKey = 'seckill:order:' .. voucherId
@@ -26,5 +26,7 @@ end
 -- 3. 扣减库存 + 记录订单
 redis.call('decr', stockKey)
 redis.call('sadd', orderKey, userId)
+--4.发送消息到队列中 XADD stream.orders * k1 vI k2 v2
+redis.call('xadd','stream.order', '*','userId',userId,'voucherId',voucherId,'id',orderId)
 
 return 0  -- 秒杀成功
