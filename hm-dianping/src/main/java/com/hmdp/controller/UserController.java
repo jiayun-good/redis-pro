@@ -1,6 +1,7 @@
 package com.hmdp.controller;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
@@ -95,5 +96,17 @@ public class UserController {
         info.setUpdateTime(null);
         // 返回
         return Result.ok(info);
+    }
+
+    //其他个人主页查询
+    @GetMapping("/{userId}")
+    public Result queryBlogById(@PathVariable("userId") Long userId){
+        User user = userService.getById(userId);
+        if(user == null){
+            return Result.ok();
+        }
+        UserDTO userDTO = BeanUtil.toBean(user, UserDTO.class);
+        return Result.ok(userDTO);
+
     }
 }
