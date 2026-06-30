@@ -80,6 +80,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         Long userId = UserHolder.getUser().getId();
         String key1 = "BLOG:LIKED:" + userId;
         String key2 = "BLOG:LIKED:" + followUserId;
+        //intersect-求交集
+
         Set<String> commonFollowIds = stringRedisTemplate.opsForSet().intersect(key1,key2);
         List<Long> ids = commonFollowIds.stream()
                 .map(item -> Long.valueOf(item))
@@ -92,11 +94,6 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 .stream().map(item -> BeanUtil.toBean(item, UserDTO.class))
                 .collect(Collectors.toList());
 
-        System.out.println("key1=" + key1);
-        System.out.println("key2=" + key2);
-
-        System.out.println("set1=" + stringRedisTemplate.opsForSet().members(key1));
-        System.out.println("set2=" + stringRedisTemplate.opsForSet().members(key2));
         return Result.ok(commonUserDTO);
     }
 }
