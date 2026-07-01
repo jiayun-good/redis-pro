@@ -21,4 +21,6 @@ public interface IShopService extends IService<Shop> {
     Result update(Shop shop);
     //保存店铺到Redis，带逻辑过期时间
     void saveShop2Redis(Long id, Long expireSeconds);
+
+    Result queryShopByType(Integer typeId, Integer current, Double x, Double y);
 }
